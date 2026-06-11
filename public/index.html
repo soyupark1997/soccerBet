@@ -159,8 +159,8 @@ button:disabled{opacity:0.35;cursor:not-allowed;pointer-events:none;}
       </div>
     </div>
     <div style="grid-column:1/-1;">
-      <button onclick="applyTeams()" style="width:100%;justify-content:center;background:#1a1a1a;color:#fff;border-color:#1a1a1a;">
-        <i class="ti ti-check"></i> 대결 적용
+      <button onclick="openPasswordModal('teams')" style="width:100%;justify-content:center;background:#1a1a1a;color:#fff;border-color:#1a1a1a;">
+        <i class="ti ti-check"></i> 대결 적용 (관리자)
       </button>
     </div>
   </div>
@@ -235,6 +235,23 @@ button:disabled{opacity:0.35;cursor:not-allowed;pointer-events:none;}
   </div>
 </div>
 
+<!-- PIN 모달 -->
+<div id="pin-modal" class="modal-backdrop" style="display:none;" onclick="if(event.target===this)closePinModal()">
+  <div class="modal-box">
+    <h2 id="pin-modal-title">PIN 설정</h2>
+    <p id="pin-modal-desc">4자리 숫자를 설정하세요.</p>
+    <input type="tel" id="pin-input" placeholder="0000" maxlength="4" inputmode="numeric" pattern="[0-9]*"
+      style="width:100%;text-align:center;font-size:32px;letter-spacing:14px;font-weight:600;border:0.5px solid rgba(0,0,0,0.15);border-radius:8px;height:56px;background:#fff;"
+      oninput="this.value=this.value.replace(/\D/g,'').slice(0,4)"
+      onkeydown="if(event.key==='Enter')confirmPin()">
+    <div class="modal-error" id="pin-error"></div>
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button onclick="closePinModal()" style="flex:1;justify-content:center;">취소</button>
+      <button onclick="confirmPin()" style="flex:1;justify-content:center;background:#1a1a1a;color:#fff;border-color:#1a1a1a;">확인</button>
+    </div>
+  </div>
+</div>
+
 <!-- 최종 순위 -->
 <div id="rank-section" style="display:none;margin-top:1.5rem;">
   <div class="section-title"><i class="ti ti-trophy" style="color:#BA7517;"></i> 최종 순위</div>
@@ -256,7 +273,7 @@ button:disabled{opacity:0.35;cursor:not-allowed;pointer-events:none;}
     <div class="system-msg">채팅에 오신 걸 환영합니다 ⚽</div>
   </div>
   <div class="chat-input-row">
-    <input type="text" id="chat-input" placeholder="메시지를 입력하세요..." maxlength="200" onkeydown="if(event.key==='Enter')sendMessage()">
+    <input type="text" id="chat-input" placeholder="메시지를 입력하세요..." maxlength="200" onkeydown="if(event.key==='Enter'&&!event.isComposing)sendMessage()">
     <button onclick="sendMessage()" style="padding:0 14px;"><i class="ti ti-send"></i></button>
   </div>
 </div>
@@ -383,7 +400,7 @@ const GAME_START = new Date('2025-06-12T02:00:00Z');
 const PASSWORD = 'kanto00999897';
 const colors = [['#E6F1FB','#0C447C'],['#EAF3DE','#27500A'],['#FAEEDA','#633806'],['#FBEAF0','#72243E'],['#E1F5EE','#085041']];
 const medals = ['🥇','🥈','🥉'];
-let participants = [{name:'소유',home:2,away:1,firstGoal:15},{name:'도혁',home:1,away:1,firstGoal:30},{name:'태형',home:1,away:0,firstGoal:10}];
+let participants = [{uid:'d0',name:'소유',home:2,away:1,firstGoal:15,confirmed:true},{uid:'d1',name:'도혁',home:1,away:1,firstGoal:30,confirmed:true},{uid:'d2',name:'태형',home:1,away:0,firstGoal:10,confirmed:true}];
 let homeTeam = {name:'대한민국', flag:'🇰🇷'};
 let awayTeam = {name:'체코', flag:'🇨🇿'};
 let isLocked = false;
@@ -391,6 +408,8 @@ let pwMode = 'confirm';
 let myNick = localStorage.getItem('bet-nick')||'';
 let lastMsgId = 0;
 const renderedMsgIds = new Set();
+let participantPins = JSON.parse(localStorage.getItem('bet-pins-v1')||'{}');
+let pinModalMode = null, pinModalUid = null, pinModalCallback = null;
 
 // ===================== BGM (YouTube IFrame API) =====================
 let ytPlayer = null;
@@ -496,6 +515,7 @@ async function loadData() {
     if(rows?.[0]?.data){
       const d=rows[0].data;
       participants=d.participants||participants;
+      participants.forEach((p,idx)=>{if(!p.uid)p.uid='sb'+idx+Date.now().toString(36);if(p.confirmed===undefined)p.confirmed=true;});
       if(d.homeTeam) homeTeam=d.homeTeam;
       if(d.awayTeam) awayTeam=d.awayTeam;
       document.getElementById('real-home').value=d.realHome??'';
@@ -525,29 +545,105 @@ function renderParticipants() {
   document.getElementById('participants-area').innerHTML=participants.map((p,i)=>{
     const[bg,tc]=colors[i%colors.length];
     const total=(p.home!==null&&p.away!==null&&!isNaN(p.home)&&!isNaN(p.away))?p.home+p.away:'-';
+    if(p.confirmed){
+      return`<div class="pcard" style="border-color:#97c45a66;">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+          <div id="avatar-${i}" style="width:32px;height:32px;border-radius:50%;background:${bg};color:${tc};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;flex-shrink:0;">${getInitials(p.name)}</div>
+          <span style="flex:1;min-width:0;font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(p.name||'(이름없음)')}</span>
+          <span style="font-size:11px;color:#639922;white-space:nowrap;flex-shrink:0;">✓ 확정</span>
+        </div>
+        <div class="fl">스코어 예측</div>
+        <div style="font-size:20px;font-weight:500;margin-bottom:6px;">${p.home??'?'} : ${p.away??'?'}</div>
+        <div class="fl">총 골 <span class="auto-tag">자동</span></div>
+        <div class="total-display" id="total-display-${i}">${total}</div>
+        <div class="fl">첫 골 시간</div>
+        <div style="font-size:12px;color:#555;margin-top:2px;">${formatFirstGoal(p.firstGoal)}</div>
+      </div>`;
+    }
     const dis=isLocked?'disabled':'';
-    return`<div class="pcard">
+    return`<div class="pcard" style="border-color:#378ADD44;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
         <div id="avatar-${i}" style="width:32px;height:32px;border-radius:50%;background:${bg};color:${tc};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;flex-shrink:0;">${getInitials(p.name)}</div>
-        <input type="text" value="${escapeHtml(p.name||'')}" style="flex:1;min-width:0;margin:0 6px;font-size:13px;font-weight:500;" placeholder="닉네임" ${dis} oninput="participants[${i}].name=this.value;updateAvatar(${i});autoSave()">
+        <input type="text" value="${escapeHtml(p.name||'')}" style="flex:1;min-width:0;margin:0 6px;font-size:13px;font-weight:500;" placeholder="닉네임" ${dis} oninput="participants[${i}].name=this.value;updateAvatar(${i})">
         ${isLocked?'':`<button class="del-btn" onclick="removeParticipant(${i})"><i class="ti ti-x"></i></button>`}
       </div>
       <div class="fl">스코어</div>
       <div style="display:flex;align-items:center;gap:4px;margin-bottom:10px;">
-        <input type="number" class="si" style="width:38px;" min="0" max="20" value="${p.home??''}" placeholder="0" ${dis} oninput="participants[${i}].home=this.value===''?null:parseInt(this.value);syncCardTotal(${i});autoSave()">
+        <input type="number" class="si" style="width:38px;" min="0" max="20" value="${p.home??''}" placeholder="0" ${dis} oninput="participants[${i}].home=this.value===''?null:parseInt(this.value);syncCardTotal(${i})">
         <span class="vs-s">:</span>
-        <input type="number" class="si" style="width:38px;" min="0" max="20" value="${p.away??''}" placeholder="0" ${dis} oninput="participants[${i}].away=this.value===''?null:parseInt(this.value);syncCardTotal(${i});autoSave()">
+        <input type="number" class="si" style="width:38px;" min="0" max="20" value="${p.away??''}" placeholder="0" ${dis} oninput="participants[${i}].away=this.value===''?null:parseInt(this.value);syncCardTotal(${i})">
       </div>
       <div class="fl">총 골 <span class="auto-tag">자동</span></div>
       <div class="total-display" id="total-display-${i}">${total}</div>
       <div class="fl">첫 골 시간</div>
-      <select id="fg-${i}" style="font-size:12px;" ${dis} onchange="participants[${i}].firstGoal=this.value;autoSave()"></select>
+      <select id="fg-${i}" style="font-size:12px;" ${dis} onchange="participants[${i}].firstGoal=this.value"></select>
+      ${!isLocked?`<button onclick="submitCard(${i})" style="width:100%;margin-top:12px;justify-content:center;background:#378ADD;color:#fff;border-color:#378ADD;font-size:13px;"><i class="ti ti-check"></i> 제출</button>`:''}
     </div>`;
   }).join('');
-  participants.forEach((_,i)=>buildMinuteOptions(`fg-${i}`,participants[i].firstGoal));
+  participants.forEach((_,i)=>{if(!participants[i].confirmed)buildMinuteOptions(`fg-${i}`,participants[i].firstGoal);});
 }
-function addParticipant(){if(isLocked)return;participants.push({name:'',home:null,away:null,firstGoal:null});renderParticipants();document.querySelector('#participants-area .pcard:last-child input[type=text]')?.focus();autoSave();}
-function removeParticipant(i){if(isLocked)return;participants.splice(i,1);renderParticipants();autoSave();}
+function genUid(){return Date.now().toString(36)+Math.random().toString(36).substr(2,5);}
+function addParticipant(){
+  if(isLocked)return;
+  openPinSetupModal(pin=>{
+    const uid=genUid();
+    participants.push({uid,name:'',home:null,away:null,firstGoal:null,confirmed:false});
+    participantPins[uid]=pin;
+    localStorage.setItem('bet-pins-v1',JSON.stringify(participantPins));
+    renderParticipants();
+    setTimeout(()=>document.querySelector('#participants-area .pcard:last-child input[type=text]')?.focus(),50);
+  });
+}
+function removeParticipant(i){
+  if(isLocked)return;
+  const uid=participants[i]?.uid;
+  const doRemove=()=>{participants.splice(i,1);renderParticipants();autoSave();};
+  if(uid&&participantPins[uid]) openPinConfirmModal(uid,doRemove);
+  else doRemove();
+}
+function submitCard(i){
+  const p=participants[i];
+  if(!p.name){alert('닉네임을 입력해주세요!');return;}
+  const uid=p.uid;
+  const doConfirm=()=>{participants[i].confirmed=true;renderParticipants();autoSave();};
+  if(uid&&participantPins[uid]) openPinConfirmModal(uid,doConfirm);
+  else doConfirm();
+}
+function formatFirstGoal(v){
+  if(!v||v===''||v==='-')return '선택 안함';
+  if(v==='45+')return '전반 45+분';
+  if(v==='90+')return '후반 90+분';
+  const n=parseFloat(v);
+  if(n<=45)return `전반 ${n}분`;
+  if(n<=90)return `후반 ${n}분`;
+  return `연장 ${n}분`;
+}
+function openPinSetupModal(cb){
+  pinModalMode='setup';pinModalCallback=cb;
+  document.getElementById('pin-modal-title').textContent='PIN 설정';
+  document.getElementById('pin-modal-desc').textContent='본인 카드 확정에 사용할 4자리 숫자를 설정하세요.';
+  document.getElementById('pin-input').value='';document.getElementById('pin-error').textContent='';
+  document.getElementById('pin-modal').style.display='flex';
+  setTimeout(()=>document.getElementById('pin-input').focus(),100);
+}
+function openPinConfirmModal(uid,cb){
+  pinModalMode='confirm';pinModalUid=uid;pinModalCallback=cb;
+  document.getElementById('pin-modal-title').textContent='PIN 확인';
+  document.getElementById('pin-modal-desc').textContent='설정하신 4자리 PIN을 입력하세요.';
+  document.getElementById('pin-input').value='';document.getElementById('pin-error').textContent='';
+  document.getElementById('pin-modal').style.display='flex';
+  setTimeout(()=>document.getElementById('pin-input').focus(),100);
+}
+function closePinModal(){document.getElementById('pin-modal').style.display='none';pinModalCallback=null;}
+function confirmPin(){
+  const pin=document.getElementById('pin-input').value;
+  if(!/^\d{4}$/.test(pin)){document.getElementById('pin-error').textContent='4자리 숫자를 입력하세요.';return;}
+  if(pinModalMode==='setup'){closePinModal();pinModalCallback(pin);}
+  else{
+    if(pin===participantPins[pinModalUid]){closePinModal();pinModalCallback();}
+    else{document.getElementById('pin-error').textContent='PIN이 틀렸습니다.';document.getElementById('pin-input').value='';document.getElementById('pin-input').focus();}
+  }
+}
 
 // ===================== 비번 & 확정 =====================
 function openPasswordModal(mode='confirm'){
@@ -556,9 +652,12 @@ function openPasswordModal(mode='confirm'){
     if(document.getElementById('real-home').value===''||document.getElementById('real-away').value===''){alert('실제 스코어를 먼저 입력해주세요!');return;}
     document.getElementById('pw-modal-title').textContent='결과 확정';
     document.getElementById('pw-modal-desc').textContent='관리자 비밀번호를 입력하면 모두의 순위보기 버튼이 활성화됩니다.';
-  } else {
+  } else if(mode==='lock') {
     document.getElementById('pw-modal-title').textContent='경기 시작 잠금';
     document.getElementById('pw-modal-desc').textContent='비밀번호를 입력하면 모든 예측 수정이 잠깁니다.';
+  } else {
+    document.getElementById('pw-modal-title').textContent='대결 설정';
+    document.getElementById('pw-modal-desc').textContent='관리자 비밀번호를 입력하세요.';
   }
   document.getElementById('pw-input').value='';document.getElementById('pw-error').textContent='';
   document.getElementById('pw-modal').style.display='flex';
@@ -566,7 +665,7 @@ function openPasswordModal(mode='confirm'){
 }
 function closePasswordModal(){document.getElementById('pw-modal').style.display='none';}
 function checkPassword(){
-  if(document.getElementById('pw-input').value===PASSWORD){closePasswordModal();if(pwMode==='lock')lockGame();else{autoSave(true);activateRankBtn();}}
+  if(document.getElementById('pw-input').value===PASSWORD){closePasswordModal();if(pwMode==='lock')lockGame();else if(pwMode==='teams')applyTeams();else{autoSave(true);activateRankBtn();}}
   else{document.getElementById('pw-error').textContent='비밀번호가 틀렸습니다.';document.getElementById('pw-input').value='';document.getElementById('pw-input').focus();}
 }
 function activateRankBtn(){
@@ -606,7 +705,27 @@ function showRanking(){
 }
 
 // ===================== 채팅 =====================
-function saveNick(){const v=document.getElementById('chat-nick').value.trim();if(!v)return;myNick=v;localStorage.setItem('bet-nick',myNick);document.getElementById('nick-status').textContent=`"${myNick}" 설정됨`;addSystemMsg(`${myNick}님이 입장했습니다.`);}
+async function saveNick(){
+  const v=document.getElementById('chat-nick').value.trim();if(!v)return;
+  try{
+    const res=await fetch('/api/register-nick',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({nick:v})});
+    const d=await res.json();
+    if(!d.ok){
+      if(d.existingNick){
+        document.getElementById('chat-nick').value=d.existingNick;
+        myNick=d.existingNick;localStorage.setItem('bet-nick',myNick);
+        document.getElementById('nick-status').textContent=`이미 "${myNick}"으로 등록됨`;
+        addSystemMsg(`${myNick}님이 입장했습니다.`);
+      } else {
+        document.getElementById('nick-status').textContent='이미 사용 중인 닉네임입니다.';
+      }
+      return;
+    }
+  }catch(e){}
+  myNick=v;localStorage.setItem('bet-nick',myNick);
+  document.getElementById('nick-status').textContent=`"${myNick}" 설정됨`;
+  addSystemMsg(`${myNick}님이 입장했습니다.`);
+}
 function formatTime(iso){const d=new Date(iso);return`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;}
 function addSystemMsg(text){const el=document.createElement('div');el.className='system-msg';el.textContent=text;const box=document.getElementById('chat-messages');box.appendChild(el);box.scrollTop=box.scrollHeight;}
 function renderMsg(msg){
@@ -643,6 +762,7 @@ async function init(){
   document.getElementById('sel-home').value=homeTeam.name;
   document.getElementById('sel-away').value=awayTeam.name;
   updateTeam('home'); updateTeam('away');
+  try{const r=await fetch('/api/my-nick');const d=await r.json();if(d.nick){myNick=d.nick;localStorage.setItem('bet-nick',myNick);}}catch(e){}
   if(myNick){document.getElementById('chat-nick').value=myNick;document.getElementById('nick-status').textContent=`"${myNick}" 설정됨`;}
   renderParticipants();
   await loadMessages();
