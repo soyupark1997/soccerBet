@@ -1,0 +1,650 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>축구 내기</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f5f3;color:#1a1a1a;padding:1.5rem;min-height:100vh;}
+.hero{background:#efefed;border-radius:12px;padding:1.25rem;margin-bottom:1.5rem;position:relative;overflow:hidden;}
+.ball{position:absolute;pointer-events:none;opacity:0.11;}
+.b1{bottom:10px;left:6%;animation:float1 7s ease-in-out infinite;}
+.b2{bottom:18px;right:8%;animation:float2 9s ease-in-out infinite;}
+.b3{bottom:35px;left:42%;animation:float3 11s ease-in-out infinite;}
+.b4{bottom:6px;right:32%;animation:float4 8s ease-in-out 1s infinite;}
+@keyframes float1{0%,100%{transform:translate(0,0) rotate(0deg)}25%{transform:translate(30px,-40px) rotate(90deg)}50%{transform:translate(60px,-10px) rotate(180deg)}75%{transform:translate(20px,-55px) rotate(270deg)}}
+@keyframes float2{0%,100%{transform:translate(0,0) rotate(0deg)}25%{transform:translate(-25px,-35px) rotate(-120deg)}50%{transform:translate(-50px,-5px) rotate(-240deg)}75%{transform:translate(-15px,-50px) rotate(-360deg)}}
+@keyframes float3{0%,100%{transform:translate(0,0) rotate(0deg)}33%{transform:translate(40px,-45px) rotate(135deg)}66%{transform:translate(-20px,-30px) rotate(270deg)}}
+@keyframes float4{0%,100%{transform:translate(0,0) rotate(20deg)}50%{transform:translate(-35px,-40px) rotate(200deg)}}
+@keyframes fadeInUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes popIn{0%{transform:scale(0.8);opacity:0}70%{transform:scale(1.04)}100%{transform:scale(1);opacity:1}}
+@keyframes rankIn{from{opacity:0;transform:translateX(-16px)}to{opacity:1;transform:translateX(0)}}
+@keyframes msgIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+@keyframes eq1{0%,100%{height:6px}50%{height:16px}}
+@keyframes eq2{0%,100%{height:12px}50%{height:4px}}
+@keyframes eq3{0%,100%{height:8px}50%{height:18px}}
+
+.section-title{font-size:15px;font-weight:500;display:flex;align-items:center;gap:6px;margin-bottom:12px;}
+.participants-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:10px;margin-bottom:1rem;}
+.pcard{background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:12px;padding:1rem;animation:fadeInUp 0.25s ease forwards;}
+.fl{font-size:11px;font-weight:500;color:#888;letter-spacing:0.04em;text-transform:uppercase;margin-bottom:5px;}
+.si{width:40px;text-align:center;font-size:15px;font-weight:500;height:36px;border:0.5px solid rgba(0,0,0,0.15);border-radius:8px;background:#fff;color:#1a1a1a;padding:0 4px;}
+.si:focus{outline:none;box-shadow:0 0 0 2px #378ADD44;}
+.vs-s{font-size:13px;font-weight:500;color:#888;}
+.auto-tag{background:#EAF3DE;color:#27500A;font-size:10px;font-weight:500;padding:1px 6px;border-radius:20px;margin-left:4px;}
+.total-display{font-size:20px;font-weight:500;color:#1a1a1a;margin-bottom:10px;}
+select{height:36px;padding:0 8px;border:0.5px solid rgba(0,0,0,0.15);border-radius:8px;background:#fff;color:#1a1a1a;font-size:13px;cursor:pointer;width:100%;}
+select:focus{outline:none;box-shadow:0 0 0 2px #378ADD44;}
+input[type=text],input[type=password]{height:36px;padding:0 10px;border:0.5px solid rgba(0,0,0,0.15);border-radius:8px;background:#fff;color:#1a1a1a;font-size:14px;}
+input[type=text]:focus,input[type=password]:focus{outline:none;box-shadow:0 0 0 2px #378ADD44;}
+input[type=number]{height:36px;padding:0 6px;border:0.5px solid rgba(0,0,0,0.15);border-radius:8px;background:#fff;color:#1a1a1a;}
+input[type=number]:focus{outline:none;box-shadow:0 0 0 2px #378ADD44;}
+button{height:36px;padding:0 14px;border:0.5px solid rgba(0,0,0,0.2);border-radius:8px;background:transparent;color:#1a1a1a;font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;transition:background 0.15s;}
+button:hover{background:rgba(0,0,0,0.05);}
+button:active{transform:scale(0.98);}
+button:disabled{opacity:0.35;cursor:not-allowed;pointer-events:none;}
+.del-btn{border:none;background:none;height:auto;padding:3px;color:#bbb;font-size:17px;cursor:pointer;}
+.del-btn:hover{background:none !important;color:#e24b4a;}
+.real-card{background:#fff;border:2px solid #378ADD55;border-radius:12px;padding:1.25rem;margin-bottom:1.5rem;}
+.real-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+.score-row{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.deadline-notice{font-size:12px;color:#e24b4a;display:flex;align-items:center;gap:4px;margin-bottom:1.5rem;}
+.locked-banner{background:#FFF3CD;border:1px solid #FFEAA7;border-radius:8px;padding:10px 14px;font-size:13px;color:#856404;display:flex;align-items:center;gap:8px;margin-bottom:1rem;}
+.confirmed-banner{background:#EAF3DE;border:1px solid #C0DD97;border-radius:8px;padding:10px 14px;font-size:13px;color:#27500A;display:flex;align-items:center;gap:8px;margin-bottom:1rem;}
+.saving-dot{font-size:11px;color:#639922;min-height:16px;margin-bottom:6px;display:flex;align-items:center;gap:4px;}
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:flex;align-items:center;justify-content:center;z-index:100;}
+.modal-box{background:#fff;border-radius:16px;padding:2rem;width:320px;animation:popIn 0.3s ease forwards;}
+.modal-box h2{font-size:18px;font-weight:500;margin-bottom:6px;}
+.modal-box p{font-size:13px;color:#888;margin-bottom:1.25rem;}
+.modal-error{font-size:12px;color:#e24b4a;margin-top:8px;min-height:16px;}
+.rank-card{background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:12px;overflow:hidden;}
+.rank-row{display:flex;align-items:center;gap:12px;padding:14px 16px;border-bottom:0.5px solid rgba(0,0,0,0.07);animation:rankIn 0.4s ease forwards;opacity:0;}
+.rank-row:last-child{border-bottom:none;}
+.rank-row:nth-child(1){animation-delay:0s;}.rank-row:nth-child(2){animation-delay:0.08s;}.rank-row:nth-child(3){animation-delay:0.16s;}.rank-row:nth-child(4){animation-delay:0.24s;}.rank-row:nth-child(5){animation-delay:0.32s;}
+.rank-1-row{background:#FFFBF0;}
+.rank-num{font-size:22px;width:32px;text-align:center;flex-shrink:0;}
+.rank-avatar{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:500;flex-shrink:0;}
+.rank-info{flex:1;min-width:0;}
+.rank-name{font-size:15px;font-weight:500;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.rank-detail{font-size:11px;color:#888;margin-top:3px;}
+.wpill{font-size:11px;padding:3px 8px;border-radius:20px;background:#EAF3DE;color:#27500A;font-weight:500;}
+.lpill{font-size:11px;padding:3px 8px;border-radius:20px;background:#FCEBEB;color:#791F1F;font-weight:500;}
+.rank-score-badge{font-size:13px;font-weight:500;padding:4px 10px;border-radius:8px;background:#f5f5f3;color:#888;flex-shrink:0;}
+.rank-score-badge.perfect{background:#EAF3DE;color:#27500A;}
+.rank-score-badge.good{background:#E6F1FB;color:#0C447C;}
+.rank-view-btn{width:100%;justify-content:center;font-size:14px;}
+.rank-view-btn.active{background:#1a1a1a;color:#fff;border-color:#1a1a1a;}
+.next-match-card{background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:12px;padding:1.25rem;margin-bottom:1.5rem;}
+.flag-preview{font-size:28px;line-height:1;}
+.team-sel-wrap{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+
+/* 채팅 */
+.chat-card{background:#fff;border:0.5px solid rgba(0,0,0,0.1);border-radius:12px;overflow:hidden;margin-top:1.5rem;}
+.chat-header{padding:12px 16px;border-bottom:0.5px solid rgba(0,0,0,0.07);display:flex;align-items:center;justify-content:space-between;}
+.chat-messages{height:280px;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:8px;}
+.chat-messages::-webkit-scrollbar{width:4px;}
+.chat-messages::-webkit-scrollbar-thumb{background:rgba(0,0,0,0.15);border-radius:2px;}
+.msg-row{display:flex;gap:8px;animation:msgIn 0.2s ease forwards;}
+.msg-row.mine{flex-direction:row-reverse;}
+.msg-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:500;flex-shrink:0;margin-top:2px;}
+.msg-body{max-width:70%;}
+.msg-name{font-size:11px;color:#888;margin-bottom:3px;}
+.msg-row.mine .msg-name{text-align:right;}
+.msg-bubble{font-size:13px;padding:8px 12px;border-radius:12px;line-height:1.5;word-break:break-word;}
+.msg-bubble.other{background:#f1f1ee;color:#1a1a1a;border-radius:4px 12px 12px 12px;}
+.msg-bubble.mine{background:#1a1a1a;color:#fff;border-radius:12px 4px 12px 12px;}
+.msg-time{font-size:10px;color:#bbb;margin-top:3px;}
+.msg-row.mine .msg-time{text-align:right;}
+.chat-input-row{padding:10px 12px;border-top:0.5px solid rgba(0,0,0,0.07);display:flex;gap:8px;}
+.chat-input-row input{flex:1;height:36px;padding:0 10px;border:0.5px solid rgba(0,0,0,0.15);border-radius:8px;font-size:13px;}
+.chat-input-row input:focus{outline:none;box-shadow:0 0 0 2px #378ADD44;}
+.chat-nick-bar{padding:10px 12px;border-bottom:0.5px solid rgba(0,0,0,0.07);display:flex;gap:8px;align-items:center;}
+.chat-nick-bar span{font-size:12px;color:#888;white-space:nowrap;}
+.system-msg{text-align:center;font-size:11px;color:#bbb;padding:4px 0;}
+
+/* BGM 바 */
+.bgm-bar{position:fixed;bottom:16px;right:16px;background:#1a1a1a;color:#fff;border-radius:24px;padding:8px 14px;display:flex;align-items:center;gap:8px;font-size:12px;cursor:pointer;z-index:50;transition:opacity 0.2s;}
+.bgm-bar:hover{opacity:0.85;}
+.eq{display:flex;align-items:flex-end;gap:2px;height:18px;}
+.eq span{width:3px;background:#fff;border-radius:2px;display:inline-block;}
+.eq span:nth-child(1){animation:eq1 0.6s ease-in-out infinite;}
+.eq span:nth-child(2){animation:eq2 0.6s ease-in-out 0.2s infinite;}
+.eq span:nth-child(3){animation:eq3 0.6s ease-in-out 0.1s infinite;}
+.eq.paused span{animation:none;height:4px;}
+</style>
+</head>
+<body>
+
+<!-- BGM (유튜브 숨김 iframe) -->
+<div id="yt-player" style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;"></div>
+<div class="bgm-bar" id="bgm-bar" onclick="toggleBgm()">
+  <div class="eq paused" id="eq-icon">
+    <span></span><span></span><span></span>
+  </div>
+  <span id="bgm-label">BGM 재생</span>
+</div>
+
+<div class="hero">
+  <div class="ball b1"><svg width="44" height="44" viewBox="0 0 44 44"><circle cx="22" cy="22" r="20" fill="none" stroke="#1a1a1a" stroke-width="1.5"/><polygon points="22,8 26,16 22,20 18,16" fill="#1a1a1a" opacity="0.7"/><polygon points="34,17 30,21 26,16 30,12" fill="#1a1a1a" opacity="0.5"/><polygon points="10,17 14,12 18,16 14,21" fill="#1a1a1a" opacity="0.5"/><polygon points="22,36 17,30 22,28 27,30" fill="#1a1a1a" opacity="0.6"/></svg></div>
+  <div class="ball b2"><svg width="36" height="36" viewBox="0 0 44 44"><circle cx="22" cy="22" r="20" fill="none" stroke="#1a1a1a" stroke-width="1.5"/><polygon points="22,8 26,16 22,20 18,16" fill="#1a1a1a" opacity="0.7"/><polygon points="22,36 17,30 22,28 27,30" fill="#1a1a1a" opacity="0.6"/></svg></div>
+  <div class="ball b3"><svg width="26" height="26" viewBox="0 0 44 44"><circle cx="22" cy="22" r="20" fill="none" stroke="#1a1a1a" stroke-width="1.5"/><polygon points="22,8 26,16 22,20 18,16" fill="#1a1a1a" opacity="0.7"/></svg></div>
+  <div class="ball b4"><svg width="52" height="52" viewBox="0 0 44 44"><circle cx="22" cy="22" r="20" fill="none" stroke="#1a1a1a" stroke-width="1.5"/><polygon points="22,8 26,16 22,20 18,16" fill="#1a1a1a" opacity="0.7"/><polygon points="34,17 30,21 26,16 30,12" fill="#1a1a1a" opacity="0.5"/><polygon points="10,17 14,12 18,16 14,21" fill="#1a1a1a" opacity="0.5"/><polygon points="22,36 17,30 22,28 27,30" fill="#1a1a1a" opacity="0.6"/></svg></div>
+  <p style="font-size:22px;font-weight:500;margin-bottom:2px;">축구 내기 ⚽</p>
+  <p style="font-size:13px;color:#888;margin-bottom:1rem;">결과 입력하면 자동으로 순위 계산!</p>
+  <div style="display:flex;align-items:center;justify-content:center;gap:20px;" id="hero-teams">
+    <div style="text-align:center;"><div id="home-flag" style="font-size:32px;line-height:1;margin-bottom:4px;">🇰🇷</div><div id="home-name" style="font-size:13px;font-weight:500;">한국</div></div>
+    <div style="font-size:18px;font-weight:500;color:#888;">vs</div>
+    <div style="text-align:center;"><div id="away-flag" style="font-size:32px;line-height:1;margin-bottom:4px;">🇨🇿</div><div id="away-name" style="font-size:13px;font-weight:500;">체코</div></div>
+  </div>
+</div>
+
+<!-- 다음 대결 설정 -->
+<div class="next-match-card">
+  <div class="section-title"><i class="ti ti-settings"></i> 대결 설정</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+    <div>
+      <div class="fl">홈팀</div>
+      <div class="team-sel-wrap">
+        <div id="sel-home-flag" class="flag-preview">🇰🇷</div>
+        <select id="sel-home" onchange="updateTeam('home')" style="flex:1;"></select>
+      </div>
+    </div>
+    <div>
+      <div class="fl">원정팀</div>
+      <div class="team-sel-wrap">
+        <div id="sel-away-flag" class="flag-preview">🇨🇿</div>
+        <select id="sel-away" onchange="updateTeam('away')" style="flex:1;"></select>
+      </div>
+    </div>
+    <div style="grid-column:1/-1;">
+      <button onclick="applyTeams()" style="width:100%;justify-content:center;background:#1a1a1a;color:#fff;border-color:#1a1a1a;">
+        <i class="ti ti-check"></i> 대결 적용
+      </button>
+    </div>
+  </div>
+</div>
+
+<div id="locked-banner" class="locked-banner" style="display:none;">
+  <i class="ti ti-lock" style="font-size:16px;"></i>
+  <span>경기가 시작되어 예측 수정이 잠겼습니다.</span>
+</div>
+<div id="confirmed-banner" class="confirmed-banner" style="display:none;">
+  <i class="ti ti-check" style="font-size:16px;"></i>
+  <span>결과가 확정됐습니다! 순위보기 버튼을 눌러 확인하세요.</span>
+</div>
+
+<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+  <div class="section-title" style="margin:0;"><i class="ti ti-users"></i> 참가자 예측</div>
+  <button id="add-btn" onclick="addParticipant()"><i class="ti ti-plus"></i> 추가</button>
+</div>
+<div class="deadline-notice"><i class="ti ti-clock" style="font-size:14px;"></i> 경기가 시작되면 수정이 불가합니다</div>
+<div id="saving-dot" class="saving-dot"></div>
+<div class="participants-grid" id="participants-area"></div>
+
+<div class="real-card">
+  <div class="section-title"><i class="ti ti-flag-3" style="color:#378ADD;"></i> 실제 경기 결과</div>
+  <div class="real-grid">
+    <div>
+      <div class="fl">최종 스코어</div>
+      <div class="score-row">
+        <span id="real-home-tag" style="background:#E6F1FB;color:#0C447C;font-size:11px;font-weight:500;padding:2px 7px;border-radius:20px;">한국</span>
+        <input type="number" id="real-home" class="si" min="0" max="20" placeholder="0" oninput="syncRealTotal();autoSave()">
+        <span class="vs-s">:</span>
+        <input type="number" id="real-away" class="si" min="0" max="20" placeholder="0" oninput="syncRealTotal();autoSave()">
+        <span id="real-away-tag" style="background:#FCEBEB;color:#791F1F;font-size:11px;font-weight:500;padding:2px 7px;border-radius:20px;">체코</span>
+      </div>
+    </div>
+    <div>
+      <div class="fl">총 골 수 <span class="auto-tag">자동</span></div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <input type="number" id="real-total" class="si" readonly style="background:#f5f5f3;color:#888;cursor:default;">
+        <span style="font-size:12px;color:#888;">골</span>
+      </div>
+    </div>
+    <div style="grid-column:1/-1;">
+      <div class="fl">첫 골 시간</div>
+      <select id="real-firstgoal" onchange="autoSave()" style="max-width:160px;"></select>
+    </div>
+    <div style="grid-column:1/-1;border-top:0.5px solid rgba(0,0,0,0.07);padding-top:12px;margin-top:4px;display:flex;gap:8px;flex-wrap:wrap;">
+      <button id="lock-btn" onclick="openPasswordModal('lock')" style="flex:1;justify-content:center;background:#E57C00;color:#fff;border-color:#E57C00;font-size:14px;">
+        <i class="ti ti-player-play"></i> 경기 시작 (잠금)
+      </button>
+      <button onclick="openPasswordModal('confirm')" style="flex:1;justify-content:center;background:#1a1a1a;color:#fff;border-color:#1a1a1a;font-size:14px;">
+        <i class="ti ti-flag-3"></i> 결과 확정 (관리자)
+      </button>
+      <button id="rank-view-btn" class="rank-view-btn" onclick="showRanking()" disabled>
+        <i class="ti ti-trophy"></i> 순위 보기
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- 비밀번호 모달 -->
+<div id="pw-modal" class="modal-backdrop" style="display:none;" onclick="if(event.target===this)closePasswordModal()">
+  <div class="modal-box">
+    <h2 id="pw-modal-title">결과 확정</h2>
+    <p id="pw-modal-desc">관리자 비밀번호를 입력하면 모두의 순위보기 버튼이 활성화됩니다.</p>
+    <input type="password" id="pw-input" placeholder="비밀번호" style="width:100%;" onkeydown="if(event.key==='Enter')checkPassword()">
+    <div class="modal-error" id="pw-error"></div>
+    <div style="display:flex;gap:8px;margin-top:14px;">
+      <button onclick="closePasswordModal()" style="flex:1;justify-content:center;">취소</button>
+      <button onclick="checkPassword()" style="flex:1;justify-content:center;background:#1a1a1a;color:#fff;border-color:#1a1a1a;">확인</button>
+    </div>
+  </div>
+</div>
+
+<!-- 최종 순위 -->
+<div id="rank-section" style="display:none;margin-top:1.5rem;">
+  <div class="section-title"><i class="ti ti-trophy" style="color:#BA7517;"></i> 최종 순위</div>
+  <div class="rank-card" id="rank-list"></div>
+</div>
+
+<!-- 실시간 채팅 -->
+<div class="chat-card">
+  <div class="chat-header">
+    <div class="section-title" style="margin:0;"><i class="ti ti-message-circle"></i> 실시간 채팅</div>
+  </div>
+  <div class="chat-nick-bar">
+    <span>닉네임</span>
+    <input type="text" id="chat-nick" placeholder="이름 입력" style="width:90px;height:30px;font-size:13px;" maxlength="8">
+    <button onclick="saveNick()" style="height:30px;font-size:12px;padding:0 10px;">설정</button>
+    <span id="nick-status" style="font-size:12px;color:#639922;"></span>
+  </div>
+  <div class="chat-messages" id="chat-messages">
+    <div class="system-msg">채팅에 오신 걸 환영합니다 ⚽</div>
+  </div>
+  <div class="chat-input-row">
+    <input type="text" id="chat-input" placeholder="메시지를 입력하세요..." maxlength="200" onkeydown="if(event.key==='Enter')sendMessage()">
+    <button onclick="sendMessage()" style="padding:0 14px;"><i class="ti ti-send"></i></button>
+  </div>
+</div>
+
+<!-- 유튜브 IFrame API -->
+<script src="https://www.youtube.com/iframe_api"></script>
+<script>
+// ===================== SUPABASE 설정 =====================
+const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const BET_ID = 'korea-czech-2025';
+
+const sbH = {
+  'Content-Type':'application/json',
+  'apikey': SUPABASE_ANON_KEY,
+  'Authorization': `Bearer ${SUPABASE_ANON_KEY}`,
+  'Prefer':'return=representation'
+};
+async function sbGet(t,q=''){const r=await fetch(`${SUPABASE_URL}/rest/v1/${t}${q}`,{headers:sbH});return r.json();}
+async function sbUpsert(t,d){const r=await fetch(`${SUPABASE_URL}/rest/v1/${t}`,{method:'POST',headers:{...sbH,'Prefer':'resolution=merge-duplicates,return=representation'},body:JSON.stringify(d)});return r.json();}
+async function sbInsert(t,d){const r=await fetch(`${SUPABASE_URL}/rest/v1/${t}`,{method:'POST',headers:sbH,body:JSON.stringify(d)});return r.json();}
+
+// ===================== FIFA 국가 목록 =====================
+const FIFA_COUNTRIES = [
+  {name:'가나',flag:'🇬🇭'},
+  {name:'그리스',flag:'🇬🇷'},
+  {name:'나이지리아',flag:'🇳🇬'},
+  {name:'네덜란드',flag:'🇳🇱'},
+  {name:'노르웨이',flag:'🇳🇴'},
+  {name:'뉴질랜드',flag:'🇳🇿'},
+  {name:'대한민국',flag:'🇰🇷'},
+  {name:'덴마크',flag:'🇩🇰'},
+  {name:'독일',flag:'🇩🇪'},
+  {name:'멕시코',flag:'🇲🇽'},
+  {name:'모로코',flag:'🇲🇦'},
+  {name:'미국',flag:'🇺🇸'},
+  {name:'벨기에',flag:'🇧🇪'},
+  {name:'브라질',flag:'🇧🇷'},
+  {name:'사우디아라비아',flag:'🇸🇦'},
+  {name:'세네갈',flag:'🇸🇳'},
+  {name:'세르비아',flag:'🇷🇸'},
+  {name:'스위스',flag:'🇨🇭'},
+  {name:'스페인',flag:'🇪🇸'},
+  {name:'슬로바키아',flag:'🇸🇰'},
+  {name:'아르헨티나',flag:'🇦🇷'},
+  {name:'아이슬란드',flag:'🇮🇸'},
+  {name:'에콰도르',flag:'🇪🇨'},
+  {name:'영국(잉글랜드)',flag:'🏴󠁧󠁢󠁥󠁮󠁧󠁿'},
+  {name:'오스트레일리아',flag:'🇦🇺'},
+  {name:'오스트리아',flag:'🇦🇹'},
+  {name:'우루과이',flag:'🇺🇾'},
+  {name:'이란',flag:'🇮🇷'},
+  {name:'이탈리아',flag:'🇮🇹'},
+  {name:'일본',flag:'🇯🇵'},
+  {name:'체코',flag:'🇨🇿'},
+  {name:'카메룬',flag:'🇨🇲'},
+  {name:'카타르',flag:'🇶🇦'},
+  {name:'캐나다',flag:'🇨🇦'},
+  {name:'코스타리카',flag:'🇨🇷'},
+  {name:'콜롬비아',flag:'🇨🇴'},
+  {name:'크로아티아',flag:'🇭🇷'},
+  {name:'튀니지',flag:'🇹🇳'},
+  {name:'튀르키예',flag:'🇹🇷'},
+  {name:'파라과이',flag:'🇵🇾'},
+  {name:'포르투갈',flag:'🇵🇹'},
+  {name:'폴란드',flag:'🇵🇱'},
+  {name:'프랑스',flag:'🇫🇷'},
+  {name:'필리핀',flag:'🇵🇭'},
+  {name:'헝가리',flag:'🇭🇺'},
+  {name:'알제리',flag:'🇩🇿'},
+  {name:'이집트',flag:'🇪🇬'},
+  {name:'코트디부아르',flag:'🇨🇮'},
+  {name:'말리',flag:'🇲🇱'},
+  {name:'우크라이나',flag:'🇺🇦'},
+  {name:'스코틀랜드',flag:'🏴󠁧󠁢󠁳󠁣󠁴󠁿'},
+  {name:'웨일스',flag:'🏴󠁧󠁢󠁷󠁬󠁳󠁿'},
+  {name:'러시아',flag:'🇷🇺'},
+  {name:'중국',flag:'🇨🇳'},
+  {name:'인도',flag:'🇮🇳'},
+  {name:'태국',flag:'🇹🇭'},
+  {name:'베트남',flag:'🇻🇳'},
+  {name:'이라크',flag:'🇮🇶'},
+  {name:'이스라엘',flag:'🇮🇱'},
+  {name:'페루',flag:'🇵🇪'},
+  {name:'칠레',flag:'🇨🇱'},
+  {name:'볼리비아',flag:'🇧🇴'},
+  {name:'베네수엘라',flag:'🇻🇪'},
+  {name:'온두라스',flag:'🇭🇳'},
+  {name:'자메이카',flag:'🇯🇲'},
+  {name:'트리니다드토바고',flag:'🇹🇹'},
+  {name:'남아프리카공화국',flag:'🇿🇦'},
+  {name:'잠비아',flag:'🇿🇲'},
+  {name:'짐바브웨',flag:'🇿🇼'},
+  {name:'케냐',flag:'🇰🇪'},
+  {name:'탄자니아',flag:'🇹🇿'},
+  {name:'에티오피아',flag:'🇪🇹'},
+  {name:'앙골라',flag:'🇦🇴'},
+  {name:'핀란드',flag:'🇫🇮'},
+  {name:'루마니아',flag:'🇷🇴'},
+  {name:'불가리아',flag:'🇧🇬'},
+  {name:'슬로베니아',flag:'🇸🇮'},
+  {name:'북마케도니아',flag:'🇲🇰'},
+  {name:'알바니아',flag:'🇦🇱'},
+  {name:'몬테네그로',flag:'🇲🇪'},
+  {name:'보스니아헤르체고비나',flag:'🇧🇦'},
+  {name:'아이슬란드',flag:'🇮🇸'},
+  {name:'조지아',flag:'🇬🇪'},
+  {name:'아르메니아',flag:'🇦🇲'},
+  {name:'아제르바이잔',flag:'🇦🇿'},
+  {name:'카자흐스탄',flag:'🇰🇿'},
+  {name:'우즈베키스탄',flag:'🇺🇿'},
+  {name:'오만',flag:'🇴🇲'},
+  {name:'요르단',flag:'🇯🇴'},
+  {name:'바레인',flag:'🇧🇭'},
+  {name:'쿠웨이트',flag:'🇰🇼'},
+  {name:'UAE',flag:'🇦🇪'},
+];
+FIFA_COUNTRIES.sort((a,b)=>a.name.localeCompare(b.name,'ko'));
+
+// ===================== 상태 =====================
+const GAME_START = new Date('2025-06-12T02:00:00Z');
+const PASSWORD = 'kanto00999897';
+const colors = [['#E6F1FB','#0C447C'],['#EAF3DE','#27500A'],['#FAEEDA','#633806'],['#FBEAF0','#72243E'],['#E1F5EE','#085041']];
+const medals = ['🥇','🥈','🥉'];
+let participants = [{name:'소유',home:2,away:1,firstGoal:15},{name:'도혁',home:1,away:1,firstGoal:30},{name:'태형',home:1,away:0,firstGoal:10}];
+let homeTeam = {name:'대한민국', flag:'🇰🇷'};
+let awayTeam = {name:'체코', flag:'🇨🇿'};
+let isLocked = false;
+let pwMode = 'confirm';
+let myNick = localStorage.getItem('bet-nick')||'';
+let lastMsgId = 0;
+
+// ===================== BGM (YouTube IFrame API) =====================
+let ytPlayer = null;
+let bgmPlaying = false;
+const YT_VIDEO_ID = 'KgO96U9HWl8';
+
+window.onYouTubeIframeAPIReady = function() {
+  ytPlayer = new YT.Player('yt-player', {
+    videoId: YT_VIDEO_ID,
+    playerVars: { autoplay:0, controls:0, loop:1, playlist:YT_VIDEO_ID, mute:0 },
+    events: {
+      onReady: () => {
+        ytPlayer.setVolume(40);
+      }
+    }
+  });
+};
+
+function toggleBgm() {
+  if (!ytPlayer) return;
+  if (bgmPlaying) {
+    ytPlayer.pauseVideo();
+    bgmPlaying = false;
+    document.getElementById('eq-icon').classList.add('paused');
+    document.getElementById('bgm-label').textContent = 'BGM 재생';
+  } else {
+    ytPlayer.playVideo();
+    bgmPlaying = true;
+    document.getElementById('eq-icon').classList.remove('paused');
+    document.getElementById('bgm-label').textContent = 'BGM 정지';
+  }
+}
+
+// 첫 클릭 시 자동 재생 시도
+document.addEventListener('click', function startBgm() {
+  if (!bgmPlaying && ytPlayer && typeof ytPlayer.playVideo === 'function') {
+    ytPlayer.playVideo();
+    bgmPlaying = true;
+    document.getElementById('eq-icon').classList.remove('paused');
+    document.getElementById('bgm-label').textContent = 'BGM 정지';
+  }
+  document.removeEventListener('click', startBgm);
+}, {once: true});
+
+// ===================== 팀 선택 드롭다운 =====================
+function buildTeamSelects() {
+  ['sel-home','sel-away'].forEach(id => {
+    const sel = document.getElementById(id);
+    sel.innerHTML = FIFA_COUNTRIES.map(c =>
+      `<option value="${c.name}" data-flag="${c.flag}">${c.flag} ${c.name}</option>`
+    ).join('');
+  });
+  document.getElementById('sel-home').value = homeTeam.name;
+  document.getElementById('sel-away').value = awayTeam.name;
+}
+
+function updateTeam(side) {
+  const sel = document.getElementById(`sel-${side}`);
+  const opt = sel.options[sel.selectedIndex];
+  const flag = opt.getAttribute('data-flag');
+  document.getElementById(`sel-${side}-flag`).textContent = flag;
+}
+
+function applyTeams() {
+  const hs = document.getElementById('sel-home');
+  const as = document.getElementById('sel-away');
+  homeTeam = {name: hs.value, flag: hs.options[hs.selectedIndex].getAttribute('data-flag')};
+  awayTeam = {name: as.value, flag: as.options[as.selectedIndex].getAttribute('data-flag')};
+  document.getElementById('home-flag').textContent = homeTeam.flag;
+  document.getElementById('home-name').textContent = homeTeam.name;
+  document.getElementById('away-flag').textContent = awayTeam.flag;
+  document.getElementById('away-name').textContent = awayTeam.name;
+  document.getElementById('real-home-tag').textContent = homeTeam.name;
+  document.getElementById('real-away-tag').textContent = awayTeam.name;
+  autoSave();
+}
+
+// ===================== 유틸 =====================
+function buildMinuteOptions(selId, val) {
+  const sel = document.getElementById(selId); if(!sel) return;
+  const cur = val??'';
+  sel.innerHTML = '<option value="">선택 안함</option>';
+  for(let h=1;h<=45;h++) sel.innerHTML+=`<option value="${h}"${String(cur)===String(h)?' selected':''}>전반 ${h}분</option>`;
+  sel.innerHTML+=`<option value="45+"${cur==='45+'?' selected':''}>전반 45+분</option>`;
+  for(let h=46;h<=90;h++) sel.innerHTML+=`<option value="${h}"${String(cur)===String(h)?' selected':''}>후반 ${h}분</option>`;
+  sel.innerHTML+=`<option value="90+"${cur==='90+'?' selected':''}>후반 90+분</option>`;
+  for(let h=91;h<=120;h++) sel.innerHTML+=`<option value="${h}"${String(cur)===String(h)?' selected':''}>연장 ${h}분</option>`;
+}
+function fgVal(v){if(!v||v===''||v==='-')return null;if(v==='45+')return 45.5;if(v==='90+')return 90.5;return parseFloat(v);}
+function syncRealTotal(){const rh=parseInt(document.getElementById('real-home').value),ra=parseInt(document.getElementById('real-away').value);document.getElementById('real-total').value=(!isNaN(rh)&&!isNaN(ra))?rh+ra:'';}
+function getInitials(n){if(!n||n.trim()==='')return'?';return n.trim().slice(0,2);}
+function updateAvatar(i){const el=document.getElementById(`avatar-${i}`);if(el)el.textContent=getInitials(participants[i].name);}
+function syncCardTotal(i){const h=participants[i].home,a=participants[i].away;const el=document.getElementById(`total-display-${i}`);if(el)el.textContent=(h!==null&&a!==null&&!isNaN(h)&&!isNaN(a))?h+a:'-';}
+function showSaving(ok){const d=document.getElementById('saving-dot');d.innerHTML=ok?`<i class="ti ti-check" style="font-size:12px;"></i> 저장됨`:`<i class="ti ti-x" style="font-size:12px;color:#e24b4a;"></i><span style="color:#e24b4a">저장 실패</span>`;if(ok)setTimeout(()=>{d.innerHTML='';},1800);}
+function escapeHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function checkLock(){isLocked=new Date()>=GAME_START;document.getElementById('locked-banner').style.display=isLocked?'flex':'none';if(isLocked){document.getElementById('add-btn').disabled=true;const lb=document.getElementById('lock-btn');if(lb)lb.disabled=true;}}
+function lockGame(save=true){isLocked=true;document.getElementById('locked-banner').style.display='flex';document.getElementById('add-btn').disabled=true;const lb=document.getElementById('lock-btn');if(lb)lb.disabled=true;renderParticipants();if(save)autoSave();}
+
+// ===================== 데이터 로드/저장 =====================
+async function loadData() {
+  try {
+    const rows = await sbGet('soccer_bet',`?id=eq.${BET_ID}&select=data`);
+    if(rows?.[0]?.data){
+      const d=rows[0].data;
+      participants=d.participants||participants;
+      if(d.homeTeam) homeTeam=d.homeTeam;
+      if(d.awayTeam) awayTeam=d.awayTeam;
+      document.getElementById('real-home').value=d.realHome??'';
+      document.getElementById('real-away').value=d.realAway??'';
+      buildMinuteOptions('real-firstgoal',d.realFirstGoal??'');
+      syncRealTotal();
+      if(d.locked) lockGame(false);
+      if(d.confirmed) activateRankBtn();
+      return;
+    }
+  } catch(e){}
+  try {
+    const raw=localStorage.getItem('soccer-bet-v2');
+    if(raw){const d=JSON.parse(raw);participants=d.participants||participants;document.getElementById('real-home').value=d.realHome??'';document.getElementById('real-away').value=d.realAway??'';buildMinuteOptions('real-firstgoal',d.realFirstGoal??'');syncRealTotal();if(d.confirmed)activateRankBtn();return;}
+  } catch(e){}
+  buildMinuteOptions('real-firstgoal','');
+}
+
+async function autoSave(confirmed=false) {
+  const payload={id:BET_ID,data:{participants,homeTeam,awayTeam,realHome:document.getElementById('real-home').value,realAway:document.getElementById('real-away').value,realFirstGoal:document.getElementById('real-firstgoal').value,locked:isLocked,confirmed,updatedAt:new Date().toISOString()}};
+  try{localStorage.setItem('soccer-bet-v2',JSON.stringify(payload.data));}catch(e){}
+  try{await sbUpsert('soccer_bet',payload);showSaving(true);}catch(e){showSaving(false);}
+}
+
+// ===================== 참가자 =====================
+function renderParticipants() {
+  document.getElementById('participants-area').innerHTML=participants.map((p,i)=>{
+    const[bg,tc]=colors[i%colors.length];
+    const total=(p.home!==null&&p.away!==null&&!isNaN(p.home)&&!isNaN(p.away))?p.home+p.away:'-';
+    const dis=isLocked?'disabled':'';
+    return`<div class="pcard">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+        <div id="avatar-${i}" style="width:32px;height:32px;border-radius:50%;background:${bg};color:${tc};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;flex-shrink:0;">${getInitials(p.name)}</div>
+        <input type="text" value="${p.name}" style="flex:1;margin:0 6px;font-size:13px;font-weight:500;" placeholder="이름" ${dis} oninput="participants[${i}].name=this.value;updateAvatar(${i});autoSave()">
+        ${isLocked?'':`<button class="del-btn" onclick="removeParticipant(${i})"><i class="ti ti-x"></i></button>`}
+      </div>
+      <div class="fl">스코어</div>
+      <div style="display:flex;align-items:center;gap:4px;margin-bottom:10px;">
+        <input type="number" class="si" style="width:38px;" min="0" max="20" value="${p.home??''}" placeholder="0" ${dis} oninput="participants[${i}].home=this.value===''?null:parseInt(this.value);syncCardTotal(${i});autoSave()">
+        <span class="vs-s">:</span>
+        <input type="number" class="si" style="width:38px;" min="0" max="20" value="${p.away??''}" placeholder="0" ${dis} oninput="participants[${i}].away=this.value===''?null:parseInt(this.value);syncCardTotal(${i});autoSave()">
+      </div>
+      <div class="fl">총 골 <span class="auto-tag">자동</span></div>
+      <div class="total-display" id="total-display-${i}">${total}</div>
+      <div class="fl">첫 골 시간</div>
+      <select id="fg-${i}" style="font-size:12px;" ${dis} onchange="participants[${i}].firstGoal=this.value;autoSave()"></select>
+    </div>`;
+  }).join('');
+  participants.forEach((_,i)=>buildMinuteOptions(`fg-${i}`,participants[i].firstGoal));
+}
+function addParticipant(){if(isLocked)return;participants.push({name:'',home:null,away:null,firstGoal:null});renderParticipants();document.querySelector('#participants-area .pcard:last-child input[type=text]')?.focus();autoSave();}
+function removeParticipant(i){if(isLocked)return;participants.splice(i,1);renderParticipants();autoSave();}
+
+// ===================== 비번 & 확정 =====================
+function openPasswordModal(mode='confirm'){
+  pwMode=mode;
+  if(mode==='confirm'){
+    if(document.getElementById('real-home').value===''||document.getElementById('real-away').value===''){alert('실제 스코어를 먼저 입력해주세요!');return;}
+    document.getElementById('pw-modal-title').textContent='결과 확정';
+    document.getElementById('pw-modal-desc').textContent='관리자 비밀번호를 입력하면 모두의 순위보기 버튼이 활성화됩니다.';
+  } else {
+    document.getElementById('pw-modal-title').textContent='경기 시작 잠금';
+    document.getElementById('pw-modal-desc').textContent='비밀번호를 입력하면 모든 예측 수정이 잠깁니다.';
+  }
+  document.getElementById('pw-input').value='';document.getElementById('pw-error').textContent='';
+  document.getElementById('pw-modal').style.display='flex';
+  setTimeout(()=>document.getElementById('pw-input').focus(),100);
+}
+function closePasswordModal(){document.getElementById('pw-modal').style.display='none';}
+function checkPassword(){
+  if(document.getElementById('pw-input').value===PASSWORD){closePasswordModal();if(pwMode==='lock')lockGame();else{autoSave(true);activateRankBtn();}}
+  else{document.getElementById('pw-error').textContent='비밀번호가 틀렸습니다.';document.getElementById('pw-input').value='';document.getElementById('pw-input').focus();}
+}
+function activateRankBtn(){
+  const btn=document.getElementById('rank-view-btn');btn.disabled=false;btn.classList.add('active');
+  document.getElementById('confirmed-banner').style.display='flex';
+}
+
+// ===================== 순위 =====================
+function showRanking(){
+  const rh=parseInt(document.getElementById('real-home').value),ra=parseInt(document.getElementById('real-away').value),rfg=fgVal(document.getElementById('real-firstgoal').value);
+  if(isNaN(rh)||isNaN(ra))return;
+  const realTotal=rh+ra;
+  const calcScore=s=>{let sc=100;sc-=s.scoreErr*10;sc-=s.totalErr*5;if(rfg!==null)sc-=Math.round(s.fgErr);return Math.max(0,sc);};
+  const scored=participants.map((p,i)=>({name:p.name||'(이름없음)',colorIdx:i,scoreErr:Math.abs((p.home||0)-rh)+Math.abs((p.away||0)-ra),totalErr:Math.abs(((p.home||0)+(p.away||0))-realTotal),fgErr:rfg===null?0:Math.abs(fgVal(p.firstGoal||0)-rfg),pred:`${p.home??'?'}:${p.away??'?'}`}));
+  scored.sort((a,b)=>calcScore(b)-calcScore(a));
+  document.getElementById('rank-list').innerHTML=scored.map((s,rank)=>{
+    const[bg,tc]=colors[s.colorIdx%colors.length];
+    const isW=rank===0,isL=rank===scored.length-1&&scored.length>1;
+    const pill=isW?`<span class="wpill">🏆 승자</span>`:isL?`<span class="lpill">💸 벌칙</span>`:'';
+    const score=calcScore(s),perfect=score===100;
+    const parts=[];
+    if(s.scoreErr>0)parts.push(`스코어 -${s.scoreErr*10}점`);
+    if(s.totalErr>0)parts.push(`총골 -${s.totalErr*5}점`);
+    if(rfg!==null&&Math.round(s.fgErr)>0)parts.push(`첫골 -${Math.round(s.fgErr)}점`);
+    return`<div class="rank-row${rank===0?' rank-1-row':''}">
+      <div class="rank-num">${medals[rank]||rank+1+'위'}</div>
+      <div class="rank-avatar" style="background:${bg};color:${tc};">${getInitials(s.name)}</div>
+      <div class="rank-info">
+        <div class="rank-name">${s.name}${pill}</div>
+        <div class="rank-detail">예측 ${s.pred} · ${parts.length?parts.join(' · '):'감점 없음'}</div>
+      </div>
+      <div class="rank-score-badge${perfect?' perfect':score>=70?' good':''}">${perfect?'100점 만점!':score+'점'}</div>
+    </div>`;
+  }).join('');
+  document.getElementById('rank-section').style.display='block';
+  document.getElementById('rank-section').scrollIntoView({behavior:'smooth'});
+}
+
+// ===================== 채팅 =====================
+function saveNick(){const v=document.getElementById('chat-nick').value.trim();if(!v)return;myNick=v;localStorage.setItem('bet-nick',myNick);document.getElementById('nick-status').textContent=`"${myNick}" 설정됨`;addSystemMsg(`${myNick}님이 입장했습니다.`);}
+function formatTime(iso){const d=new Date(iso);return`${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;}
+function addSystemMsg(text){const el=document.createElement('div');el.className='system-msg';el.textContent=text;const box=document.getElementById('chat-messages');box.appendChild(el);box.scrollTop=box.scrollHeight;}
+function renderMsg(msg){
+  const isMine=msg.nick===myNick;
+  const[bg,tc]=colors[Math.abs((msg.nick||'').charCodeAt(0)||0)%colors.length];
+  const el=document.createElement('div');el.className=`msg-row${isMine?' mine':''}`;
+  el.innerHTML=`<div class="msg-avatar" style="background:${bg};color:${tc};">${getInitials(msg.nick)}</div><div class="msg-body"><div class="msg-name">${isMine?'나':msg.nick}</div><div class="msg-bubble ${isMine?'mine':'other'}">${escapeHtml(msg.text)}</div><div class="msg-time">${formatTime(msg.created_at)}</div></div>`;
+  const box=document.getElementById('chat-messages');box.appendChild(el);box.scrollTop=box.scrollHeight;
+}
+async function loadMessages(){try{const msgs=await sbGet('bet_chat',`?bet_id=eq.${BET_ID}&order=id.asc&limit=50`);if(Array.isArray(msgs))msgs.forEach(m=>{renderMsg(m);lastMsgId=Math.max(lastMsgId,m.id);});}catch(e){}}
+async function pollMessages(){try{const msgs=await sbGet('bet_chat',`?bet_id=eq.${BET_ID}&id=gt.${lastMsgId}&order=id.asc`);if(Array.isArray(msgs)&&msgs.length)msgs.forEach(m=>{renderMsg(m);lastMsgId=Math.max(lastMsgId,m.id);});}catch(e){}}
+async function sendMessage(){
+  const input=document.getElementById('chat-input'),text=input.value.trim();
+  if(!text)return;if(!myNick){alert('먼저 닉네임을 설정해주세요!');return;}
+  input.value='';
+  try{await sbInsert('bet_chat',{bet_id:BET_ID,nick:myNick,text,created_at:new Date().toISOString()});}
+  catch(e){renderMsg({nick:myNick,text,created_at:new Date().toISOString(),id:Date.now()});}
+}
+
+// ===================== 초기화 =====================
+async function init(){
+  checkLock();
+  buildTeamSelects();
+  await loadData();
+  // 팀 UI 반영
+  document.getElementById('home-flag').textContent=homeTeam.flag;
+  document.getElementById('home-name').textContent=homeTeam.name;
+  document.getElementById('away-flag').textContent=awayTeam.flag;
+  document.getElementById('away-name').textContent=awayTeam.name;
+  document.getElementById('real-home-tag').textContent=homeTeam.name;
+  document.getElementById('real-away-tag').textContent=awayTeam.name;
+  document.getElementById('sel-home').value=homeTeam.name;
+  document.getElementById('sel-away').value=awayTeam.name;
+  updateTeam('home'); updateTeam('away');
+  if(myNick){document.getElementById('chat-nick').value=myNick;document.getElementById('nick-status').textContent=`"${myNick}" 설정됨`;}
+  renderParticipants();
+  await loadMessages();
+  setInterval(pollMessages,3000);
+  setInterval(async()=>{try{const rows=await sbGet('soccer_bet',`?id=eq.${BET_ID}&select=data`);const d=rows?.[0]?.data;if(d?.locked&&!isLocked)lockGame(false);if(d?.confirmed)activateRankBtn();}catch(e){}},5000);
+}
+init();
+</script>
+</body>
+</html>
