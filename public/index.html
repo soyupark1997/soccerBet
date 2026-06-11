@@ -506,6 +506,14 @@ function updateAvatar(i){const el=document.getElementById(`avatar-${i}`);if(el)e
 function syncCardTotal(i){const h=participants[i].home,a=participants[i].away;const el=document.getElementById(`total-display-${i}`);if(el)el.textContent=(h!==null&&a!==null&&!isNaN(h)&&!isNaN(a))?h+a:'-';}
 function showSaving(ok){const d=document.getElementById('saving-dot');d.innerHTML=ok?`<i class="ti ti-check" style="font-size:12px;"></i> 저장됨`:`<i class="ti ti-x" style="font-size:12px;color:#e24b4a;"></i><span style="color:#e24b4a">저장 실패</span>`;if(ok)setTimeout(()=>{d.innerHTML='';},1800);}
 function escapeHtml(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function onNameChange(i,el){
+  if(el.value!==el.dataset.orig){
+    participants[i].nameChanges=(participants[i].nameChanges||0)+1;
+    el.dataset.orig=el.value;
+    if((participants[i].nameChanges||0)>=2){el.disabled=true;}
+    autoSave();
+  }
+}
 function checkLock(){document.getElementById('locked-banner').style.display=isLocked?'flex':'none';if(isLocked){document.getElementById('add-btn').disabled=true;const lb=document.getElementById('lock-btn');if(lb)lb.disabled=true;}}
 function lockGame(save=true){isLocked=true;document.getElementById('locked-banner').style.display='flex';document.getElementById('add-btn').disabled=true;const lb=document.getElementById('lock-btn');if(lb)lb.disabled=true;renderParticipants();if(save)autoSave();}
 
@@ -550,7 +558,7 @@ function renderParticipants() {
       return`<div class="pcard" style="border-color:#97c45a66;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
           <div id="avatar-${i}" style="width:32px;height:32px;border-radius:50%;background:${bg};color:${tc};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;flex-shrink:0;">${getInitials(p.name)}</div>
-          <input type="text" value="${escapeHtml(p.name||'')}" style="flex:1;min-width:0;margin:0 6px;font-size:13px;font-weight:500;" placeholder="닉네임" oninput="participants[${i}].name=this.value;updateAvatar(${i});autoSave()">
+          <input type="text" value="${escapeHtml(p.name||'')}" data-orig="${escapeHtml(p.name||'')}" style="flex:1;min-width:0;margin:0 6px;font-size:13px;font-weight:500;" placeholder="닉네임" ${(p.nameChanges||0)>=2?'disabled':''} oninput="participants[${i}].name=this.value;updateAvatar(${i})" onblur="onNameChange(${i},this)">
           <span style="font-size:11px;color:#639922;white-space:nowrap;flex-shrink:0;">✓</span>
           ${!isLocked?`<button class="del-btn" onclick="removeParticipant(${i})"><i class="ti ti-trash"></i></button>`:''}
 
@@ -568,7 +576,7 @@ function renderParticipants() {
     return`<div class="pcard" style="border-color:#378ADD44;">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
         <div id="avatar-${i}" style="width:32px;height:32px;border-radius:50%;background:${bg};color:${tc};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;flex-shrink:0;">${getInitials(p.name)}</div>
-        <input type="text" value="${escapeHtml(p.name||'')}" style="flex:1;min-width:0;margin:0 6px;font-size:13px;font-weight:500;" placeholder="닉네임" ${dis} oninput="participants[${i}].name=this.value;updateAvatar(${i})">
+        <input type="text" value="${escapeHtml(p.name||'')}" data-orig="${escapeHtml(p.name||'')}" style="flex:1;min-width:0;margin:0 6px;font-size:13px;font-weight:500;" placeholder="닉네임" ${(isLocked||(p.nameChanges||0)>=2)?'disabled':''} oninput="participants[${i}].name=this.value;updateAvatar(${i})" onblur="onNameChange(${i},this)">
         ${isLocked?'':`<button class="del-btn" onclick="removeParticipant(${i})"><i class="ti ti-x"></i></button>`}
       </div>
       <div class="fl">스코어</div>
