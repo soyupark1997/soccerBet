@@ -549,8 +549,8 @@ function renderParticipants() {
       return`<div class="pcard" style="border-color:#97c45a66;">
         <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
           <div id="avatar-${i}" style="width:32px;height:32px;border-radius:50%;background:${bg};color:${tc};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;flex-shrink:0;">${getInitials(p.name)}</div>
-          <span style="flex:1;min-width:0;font-size:13px;font-weight:500;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${escapeHtml(p.name||'(이름없음)')}</span>
-          <span style="font-size:11px;color:#639922;white-space:nowrap;flex-shrink:0;">✓ 확정</span>
+          <input type="text" value="${escapeHtml(p.name||'')}" style="flex:1;min-width:0;margin:0 6px;font-size:13px;font-weight:500;" placeholder="닉네임" oninput="participants[${i}].name=this.value;updateAvatar(${i});autoSave()">
+          <span style="font-size:11px;color:#639922;white-space:nowrap;flex-shrink:0;">✓</span>
         </div>
         <div class="fl">스코어 예측</div>
         <div style="font-size:20px;font-weight:500;margin-bottom:6px;">${p.home??'?'} : ${p.away??'?'}</div>
@@ -638,9 +638,10 @@ function closePinModal(){document.getElementById('pin-modal').style.display='non
 function confirmPin(){
   const pin=document.getElementById('pin-input').value;
   if(!/^\d{4}$/.test(pin)){document.getElementById('pin-error').textContent='4자리 숫자를 입력하세요.';return;}
-  if(pinModalMode==='setup'){closePinModal();pinModalCallback(pin);}
+  const cb=pinModalCallback;
+  if(pinModalMode==='setup'){closePinModal();cb&&cb(pin);}
   else{
-    if(pin===participantPins[pinModalUid]){closePinModal();pinModalCallback();}
+    if(pin===participantPins[pinModalUid]){closePinModal();cb&&cb();}
     else{document.getElementById('pin-error').textContent='PIN이 틀렸습니다.';document.getElementById('pin-input').value='';document.getElementById('pin-input').focus();}
   }
 }
