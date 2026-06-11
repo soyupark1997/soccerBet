@@ -409,7 +409,8 @@ let myNick = localStorage.getItem('bet-nick')||'';
 let lastMsgId = 0;
 const renderedMsgIds = new Set();
 let participantPins = JSON.parse(localStorage.getItem('bet-pins-v1')||'{}');
-let pinModalMode = null, pinModalUid = null, pinModalCallback = null;
+let pinModalMode = null, pinModalUid = null, pinModalHash = null, pinModalCallback = null;
+function hashPin(pin){return btoa('soccer-bet-'+pin);}
 
 // ===================== BGM (YouTube IFrame API) =====================
 let ytPlayer = null;
@@ -551,6 +552,8 @@ function renderParticipants() {
           <div id="avatar-${i}" style="width:32px;height:32px;border-radius:50%;background:${bg};color:${tc};display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:500;flex-shrink:0;">${getInitials(p.name)}</div>
           <input type="text" value="${escapeHtml(p.name||'')}" style="flex:1;min-width:0;margin:0 6px;font-size:13px;font-weight:500;" placeholder="닉네임" oninput="participants[${i}].name=this.value;updateAvatar(${i});autoSave()">
           <span style="font-size:11px;color:#639922;white-space:nowrap;flex-shrink:0;">✓</span>
+          ${!isLocked?`<button class="del-btn" onclick="removeParticipant(${i})"><i class="ti ti-trash"></i></button>`:''}
+
         </div>
         <div class="fl">스코어 예측</div>
         <div style="font-size:20px;font-weight:500;margin-bottom:6px;">${p.home??'?'} : ${p.away??'?'}</div>
@@ -588,7 +591,7 @@ function addParticipant(){
   if(isLocked)return;
   openPinSetupModal(pin=>{
     const uid=genUid();
-    participants.push({uid,name:'',home:null,away:null,firstGoal:null,confirmed:false});
+    participants.push({uid,name:'',home:null,away:null,firstGoal:null,confirmed:false,pinHash:hashPin(pin)});
     participantPins[uid]=pin;
     localStorage.setItem('bet-pins-v1',JSON.stringify(participantPins));
     renderParticipants();
@@ -597,23 +600,25 @@ function addParticipant(){
 }
 function removeParticipant(i){
   if(isLocked)return;
-  const uid=participants[i]?.uid;
+  const p=participants[i];
   const doRemove=()=>{participants.splice(i,1);renderParticipants();autoSave();};
-  if(uid&&participantPins[uid]) openPinConfirmModal(uid,doRemove);
+  if(p.pinHash) openPinConfirmByHash(p.pinHash,doRemove);
+  else if(p.uid&&participantPins[p.uid]) openPinConfirmModal(p.uid,doRemove);
   else doRemove();
 }
 function editCard(i){
-  const uid=participants[i]?.uid;
+  const p=participants[i];
   const doEdit=()=>{participants[i].confirmed=false;renderParticipants();};
-  if(uid&&participantPins[uid]) openPinConfirmModal(uid,doEdit);
-  else doEdit();
+  if(p.pinHash) openPinConfirmByHash(p.pinHash,doEdit);
+  else if(p.uid&&participantPins[p.uid]) openPinConfirmModal(p.uid,doEdit);
+  else{alert('이 카드는 PIN이 없어 수정할 수 없습니다.');return;}
 }
 function submitCard(i){
   const p=participants[i];
   if(!p.name){alert('닉네임을 입력해주세요!');return;}
-  const uid=p.uid;
   const doConfirm=()=>{participants[i].confirmed=true;renderParticipants();autoSave();};
-  if(uid&&participantPins[uid]) openPinConfirmModal(uid,doConfirm);
+  if(p.pinHash) openPinConfirmByHash(p.pinHash,doConfirm);
+  else if(p.uid&&participantPins[p.uid]) openPinConfirmModal(p.uid,doConfirm);
   else doConfirm();
 }
 function formatFirstGoal(v){
@@ -634,9 +639,17 @@ function openPinSetupModal(cb){
   setTimeout(()=>document.getElementById('pin-input').focus(),100);
 }
 function openPinConfirmModal(uid,cb){
-  pinModalMode='confirm';pinModalUid=uid;pinModalCallback=cb;
+  pinModalMode='confirm';pinModalUid=uid;pinModalHash=null;pinModalCallback=cb;
   document.getElementById('pin-modal-title').textContent='PIN 확인';
   document.getElementById('pin-modal-desc').textContent='설정하신 4자리 PIN을 입력하세요.';
+  document.getElementById('pin-input').value='';document.getElementById('pin-error').textContent='';
+  document.getElementById('pin-modal').style.display='flex';
+  setTimeout(()=>document.getElementById('pin-input').focus(),100);
+}
+function openPinConfirmByHash(hash,cb){
+  pinModalMode='confirm-hash';pinModalHash=hash;pinModalUid=null;pinModalCallback=cb;
+  document.getElementById('pin-modal-title').textContent='PIN 확인';
+  document.getElementById('pin-modal-desc').textContent='본인 4자리 PIN을 입력하세요.';
   document.getElementById('pin-input').value='';document.getElementById('pin-error').textContent='';
   document.getElementById('pin-modal').style.display='flex';
   setTimeout(()=>document.getElementById('pin-input').focus(),100);
@@ -647,7 +660,10 @@ function confirmPin(){
   if(!/^\d{4}$/.test(pin)){document.getElementById('pin-error').textContent='4자리 숫자를 입력하세요.';return;}
   const cb=pinModalCallback;
   if(pinModalMode==='setup'){closePinModal();cb&&cb(pin);}
-  else{
+  else if(pinModalMode==='confirm-hash'){
+    if(hashPin(pin)===pinModalHash){closePinModal();cb&&cb();}
+    else{document.getElementById('pin-error').textContent='PIN이 틀렸습니다.';document.getElementById('pin-input').value='';document.getElementById('pin-input').focus();}
+  } else {
     if(pin===participantPins[pinModalUid]){closePinModal();cb&&cb();}
     else{document.getElementById('pin-error').textContent='PIN이 틀렸습니다.';document.getElementById('pin-input').value='';document.getElementById('pin-input').focus();}
   }
